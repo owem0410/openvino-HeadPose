@@ -11,6 +11,7 @@ import time
 from openvino.inference_engine import IENetwork, IECore
 
 import socket
+import threading
 
 
 def build_argparser():
@@ -37,14 +38,35 @@ def build_argparser():
     args.add_argument("-nt", "--number_top", help="Optional. Number of top results", default=10, type=int)
     
     return parser
+class ipcamCapture:
+    def __init__(self, URL):
+        self.Frame = []
+        self.status = False
+        self.isstop = False
+		
+	# 攝影機連接。
+        self.capture = cv2.VideoCapture(URL))
 
-def shapshot():
-    start = time.time()
-    cap = cv2.VideoCapture(0)
-    _ , frame = cap.read()
-    end = time.time()
-    print(str(end-start))
-    return frame
+    def start(self):
+	# 把程式放進子執行緒，daemon=True 表示該執行緒會隨著主執行緒關閉而關閉。
+        print('ipcam started!')
+        threading.Thread(target=self.queryframe, daemon=True, args=()).start()
+
+    def stop(self):
+	# 記得要設計停止無限迴圈的開關。
+        self.isstop = True
+        print('ipcam stopped!')
+   
+    def getframe(self):
+	# 當有需要影像時，再回傳最新的影像。
+        return self.Frame
+        
+    def queryframe(self):
+        while (not self.isstop):
+            self.status, self.Frame = self.capture.read()
+        
+        self.capture.release()
+
 
 def read_ir(xml_path):
     model_xml = xml_path
@@ -99,6 +121,9 @@ def main():
 
     clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     clientSocket.connect(ADDRESS)
+
+    ipcam = ipcamCapture(0)
+    ipcam.start()
     while True:
         
         msg = clientSocket.recv(1024)
@@ -107,7 +132,7 @@ def main():
         if msg == 'angle': 
             
             images_hw = []        
-            tmp_image = shapshot()       
+            tmp_image = ipcam.getframe()     
             ih, iw = tmp_image.shape[:-1]        
             images_hw.append((ih, iw))
         
