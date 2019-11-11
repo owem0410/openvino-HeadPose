@@ -1,6 +1,6 @@
 # OpenVino Headpose
 
-以Openvino Sample中的pyrhon/Objectdetection 及Intel中兩個Pre-train model 進行實作
+以Openvino Sample中的pyrhon/Objectdetection 進行修改加上Intel中兩個Pre-train model 進行實作
 face-detection-retail-0005
 head-pose-estimation-adas-0001
 
